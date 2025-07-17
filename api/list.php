@@ -1,108 +1,98 @@
 <?php
-// api/list.php - Listar pacientes con filtros y ordenamiento
-
 require_once 'config.php';
 
-// Solo aceptar GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonResponse(false, 'Método no permitido');
 }
 
-// Obtener parámetros de filtrado y ordenamiento
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$boxName = isset($_GET['boxName']) ? trim($_GET['boxName']) : ''; // Nuevo parámetro para filtrar por caja exacta
 $sortBy = isset($_GET['sort_by']) ? trim($_GET['sort_by']) : 'dni';
 $sortOrder = isset($_GET['sort_order']) ? trim($_GET['sort_order']) : 'asc';
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
 
-// Validar parámetros de ordenamiento
+// Validar columnas válidas
 $allowedSortColumns = ['dni', 'box', 'created_at', 'updated_at'];
-if (!in_array($sortBy, $allowedSortColumns)) {
-    $sortBy = 'dni';
-}
+if (!in_array($sortBy, $allowedSortColumns)) $sortBy = 'dni';
+if (!in_array($sortOrder, ['asc', 'desc'])) $sortOrder = 'asc';
+if ($limit > 500) $limit = 500;
 
-$allowedSortOrders = ['asc', 'desc'];
-if (!in_array($sortOrder, $allowedSortOrders)) {
-    $sortOrder = 'asc';
-}
-
-// Validar límite
-if ($limit > 500) {
-    $limit = 500;
-}
-
-// Calcular offset para paginación
 $offset = ($page - 1) * $limit;
 
 try {
-    // Construir query base
-    $whereClause = '';
-    $params = []; // Array para los parámetros de la cláusula WHERE
-    
-    // Agregar filtro de búsqueda si existe
-    if (!empty($search)) {
-        $whereClause = "WHERE dni LIKE :searchDni OR box LIKE :searchBox"; // Usamos parámetros con nombre
-        $searchTerm = "%$search%";
-        $params[':searchDni'] = $searchTerm; // Asigna al nombre del parámetro
-        $params[':searchBox'] = $searchTerm; // Asigna al nombre del parámetro
-    }
-    
-    // Query para obtener el total de registros
-    $countSql = "SELECT COUNT(*) FROM patients $whereClause";
-    $countStmt = $pdo->prepare($countSql);
-    
-    // Enlazar parámetros para la consulta de conteo
-    foreach ($params as $key => $value) {
-        $countStmt->bindValue($key, $value, PDO::PARAM_STR);
-    }
-    $countStmt->execute();
-    $totalRecords = $countStmt->fetchColumn();
-    
-    // Query para obtener los registros paginados
-    $sql = "SELECT id, dni, box, created_at, updated_at 
-            FROM patients 
-            $whereClause 
-            ORDER BY $sortBy $sortOrder 
-            LIMIT :limit OFFSET :offset"; // Usamos parámetros con nombre para LIMIT y OFFSET
-    
-    $stmt = $pdo->prepare($sql);
-    
-    // Enlazar los parámetros de la cláusula WHERE (si hay)
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value, PDO::PARAM_STR);
+    $params = [];
+    $where = '';
+
+    // Si se especifica un nombre de caja exacto, se usa ese filtro
+    if (!empty($boxName)) {
+        $where = "WHERE p.box = :boxName";
+        $params[':boxName'] = $boxName;
+    } elseif (!empty($search)) { // Si no, y hay un parámetro de búsqueda general, se usa el LIKE
+        $where = "WHERE p.dni LIKE :search OR p.box LIKE :search";
+        $params[':search'] = "%$search%";
     }
 
-    // Enlazar LIMIT y OFFSET explícitamente como enteros
+    // Subconsulta que selecciona solo el último id por dni
+    $sql = "
+        SELECT p.id, p.dni, p.box, p.created_at, p.updated_at
+        FROM patients p
+        INNER JOIN (
+            SELECT MAX(id) as id
+            FROM patients
+            GROUP BY dni
+        ) latest ON p.id = latest.id
+        $where
+        ORDER BY $sortBy $sortOrder
+        LIMIT :limit OFFSET :offset
+    ";
+
+    $stmt = $pdo->prepare($sql);
+
+    foreach ($params as $key => $val) {
+        $stmt->bindValue($key, $val, PDO::PARAM_STR);
+    }
     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-    
-    // Ejecutar la consulta (sin pasar parámetros aquí, ya están enlazados con bindValue)
     $stmt->execute();
+    $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Total de pacientes únicos (mantener esta parte igual ya que cuenta todos los DNI únicos)
+    $countSql = "SELECT COUNT(*) FROM (SELECT MAX(id) as id FROM patients GROUP BY dni) AS sub";
     
-    $patients = $stmt->fetchAll();
-    
-    // Calcular información de paginación
-    $totalPages = ceil($totalRecords / $limit);
-    $hasNextPage = $page < $totalPages;
-    $hasPrevPage = $page > 1;
-    
+    // Si hay un filtro de caja exacto, ajustamos el conteo total para reflejar solo esa caja
+    if (!empty($boxName)) {
+        $countSql = "SELECT COUNT(*) FROM (SELECT MAX(p.id) FROM patients p WHERE p.box = :boxName GROUP BY p.dni) AS sub";
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->bindValue(':boxName', $boxName, PDO::PARAM_STR);
+    } elseif (!empty($search)) {
+        $countSql = "SELECT COUNT(*) FROM (SELECT MAX(p.id) FROM patients p WHERE p.dni LIKE :search OR p.box LIKE :search GROUP BY p.dni) AS sub";
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+    } else {
+        $countStmt = $pdo->prepare($countSql);
+    }
+
+    $countStmt->execute();
+    $totalRecords = $countStmt->fetchColumn();
+
     jsonResponse(true, 'Pacientes obtenidos correctamente', [
         'patients' => $patients,
         'pagination' => [
             'current_page' => $page,
-            'total_pages' => $totalPages,
+            'total_pages' => ceil($totalRecords / $limit),
             'total_records' => $totalRecords,
             'records_per_page' => $limit,
-            'has_next_page' => $hasNextPage,
-            'has_prev_page' => $hasPrevPage
+            'has_next_page' => $page * $limit < $totalRecords,
+            'has_prev_page' => $page > 1
         ],
         'filters' => [
             'search' => $search,
+            'boxName' => $boxName, // Añadido el nuevo parámetro
             'sort_by' => $sortBy,
             'sort_order' => $sortOrder
         ]
     ]);
-    
 } catch (PDOException $e) {
     error_log("Error en list.php: " . $e->getMessage());
     jsonResponse(false, 'Error interno del servidor');

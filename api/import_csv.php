@@ -2,12 +2,9 @@
 require_once 'config.php';
 
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
 header('Content-Type: application/json');
 
-// Solo POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(false, 'Método no permitido');
 }
@@ -23,7 +20,7 @@ if ($file['size'] > 5 * 1024 * 1024) {
 }
 
 $imported = 0;
-$duplicates = 0;
+$updated = 0;
 $errors = 0;
 $errorMessages = [];
 
@@ -33,17 +30,20 @@ try {
         jsonResponse(false, 'No se pudo leer el archivo');
     }
 
-    $stmt = $pdo->prepare("INSERT INTO patients (dni, box) VALUES (:dni, :box)");
-    $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM patients WHERE dni = :dni");
+    $stmt = $pdo->prepare("
+        INSERT INTO patients (dni, box)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE
+        box = VALUES(box), updated_at = CURRENT_TIMESTAMP
+    ");
 
     $lineNumber = 0;
 
     while (($data = fgetcsv($handle, 1000, ';')) !== false) {
         $lineNumber++;
 
-        // Saltar encabezado
         if ($lineNumber === 1 && preg_match('/dni/i', $data[0])) {
-            continue;
+            continue; // Saltar encabezado
         }
 
         if (count($data) < 2) {
@@ -52,8 +52,8 @@ try {
             continue;
         }
 
-        $dni = preg_replace('/\D/', '', trim($data[0] ?? '')); // Solo números
-        $box = strtoupper(trim($data[1] ?? ''));
+        $dni = preg_replace('/\D/', '', trim($data[0]));
+        $box = strtoupper(trim($data[1]));
 
         if ($dni === '' || $box === '') {
             $errors++;
@@ -61,7 +61,6 @@ try {
             continue;
         }
 
-        // Validaciones básicas
         if (strlen($dni) < 6 || strlen($dni) > 10) {
             $errors++;
             $errorMessages[] = "Línea $lineNumber: DNI inválido ($dni)";
@@ -74,19 +73,16 @@ try {
             continue;
         }
 
-        // Verificar duplicado
-        $checkStmt->execute([':dni' => $dni]);
-        if ($checkStmt->fetchColumn() > 0) {
-            $duplicates++;
-            continue;
-        }
-
         try {
-            $stmt->execute([
-                ':dni' => $dni,
-                ':box' => $box
-            ]);
-            $imported++;
+            $stmt->execute([$dni, $box]);
+
+            // Saber si fue INSERT o UPDATE
+            if ($stmt->rowCount() === 1) {
+                $imported++; // insert nuevo
+            } else {
+                $updated++; // fue update
+            }
+
         } catch (PDOException $e) {
             $errors++;
             $errorMessages[] = "Línea $lineNumber: Error al insertar ($dni)";
@@ -95,13 +91,12 @@ try {
 
     fclose($handle);
 
-    $msg = "Importación completada: $imported registros";
-    if ($duplicates) $msg .= ", $duplicates duplicados";
+    $msg = "Importación completada: $imported nuevos, $updated actualizados";
     if ($errors) $msg .= ", $errors errores";
 
     jsonResponse(true, $msg, [
         'imported' => $imported,
-        'duplicates' => $duplicates,
+        'updated' => $updated,
         'errors' => $errors,
         'error_messages' => array_slice($errorMessages, 0, 10)
     ]);

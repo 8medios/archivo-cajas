@@ -671,7 +671,7 @@
 
             try {
               const res = await fetch(
-                `api/list.php?search=${encodeURIComponent(
+                `api/list.php?boxName=${encodeURIComponent(
                   box.box
                 )}&sort_by=dni&sort_order=asc&limit=500`
               );
