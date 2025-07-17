@@ -1,0 +1,61 @@
+# .htaccess - Configuración para el sistema de archivo de pacientes
+
+# Habilitar reescritura de URLs
+RewriteEngine On
+
+# Permitir CORS para API
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Configuración de seguridad
+<Files "config.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+#<Files "setup_database.php">
+#    Order allow,deny
+#    Deny from all
+#</Files>
+
+# Configuración de subida de archivos
+php_value upload_max_filesize 5M
+php_value post_max_size 5M
+php_value max_execution_time 300
+php_value max_input_time 300
+
+# Configuración de errores
+php_value display_errors Off
+php_value log_errors On
+
+# Configuración de tipos MIME
+AddType text/csv .csv
+
+# Configuración de cache
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/html "access plus 1 hour"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/json "access plus 1 hour"
+</IfModule>
+
+# Compresión GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Página de error personalizada
+ErrorDocument 404 /index.html
+ErrorDocument 500 /index.html
+
+# Seguridad adicional
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options SAMEORIGIN
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archivo de Pacientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-800 mb-2">📁 Archivo de Pacientes</h1>
+            <p class="text-gray-600">Gestión de archivo físico</p>
+        </div>
+
+        <!-- Main Menu -->
+        <div class="max-w-md mx-auto space-y-4">
+            <button onclick="openModal('registerModal')" 
+                    class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                <span class="text-xl">➕ Registrar Paciente</span>
+            </button>
+            
+            <button onclick="openModal('searchModal')" 
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                <span class="text-xl">🔍 Buscar Paciente</span>
+            </button>
+            
+            <button onclick="openModal('csvModal')" 
+                    class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                <span class="text-xl">📄 Importar CSV</span>
+            </button>
+            
+            <button onclick="openModal('listModal')" 
+                    class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                <span class="text-xl">📋 Ver Listado</span>
+            </button>
+            
+            <button onclick="exportData()" 
+                    class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105">
+                <span class="text-xl">💾 Exportar CSV</span>
+            </button>
+        </div>
+
+        <!-- Stats (Optional) -->
+        <div class="mt-8 max-w-md mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 Estadísticas</h3>
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="bg-blue-50 rounded-lg p-3">
+                        <div class="text-2xl font-bold text-blue-600" id="totalPatients">-</div>
+                        <div class="text-sm text-gray-600">Total Pacientes</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3">
+                        <div class="text-2xl font-bold text-green-600" id="totalBoxes">-</div>
+                        <div class="text-sm text-gray-600">Cajas Usadas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Registrar Paciente -->
+    <div id="registerModal" class="modal">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md mx-4 w-full fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">➕ Registrar Paciente</h2>
+                    <button onclick="closeModal('registerModal')" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <form id="registerForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">DNI del Paciente</label>
+                        <input type="text" id="registerDni" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
+                               placeholder="Ingrese DNI" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Número de Caja</label>
+                        <input type="text" id="registerBox" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
+                               placeholder="Ej: A-001" required>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" 
+                                class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            Registrar
+                        </button>
+                        <button type="button" onclick="closeModal('registerModal')" 
+                                class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="registerMessage" class="mt-4 hidden p-3 rounded-lg text-sm"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Buscar Paciente -->
+    <div id="searchModal" class="modal">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md mx-4 w-full fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">🔍 Buscar Paciente</h2>
+                    <button onclick="closeModal('searchModal')" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <form id="searchForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">DNI del Paciente</label>
+                        <input type="text" id="searchDni" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                               placeholder="Ingrese DNI" required>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" 
+                                class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            Buscar
+                        </button>
+                        <button type="button" onclick="closeModal('searchModal')" 
+                                class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="searchResult" class="mt-4 hidden p-4 rounded-lg border"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Importar CSV -->
+    <div id="csvModal" class="modal">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md mx-4 w-full fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">📄 Importar CSV</h2>
+                    <button onclick="closeModal('csvModal')" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-sm text-yellow-800">
+                        <strong>Formato requerido:</strong><br>
+                        DNI,Caja<br>
+                        12345678,A-001<br>
+                        87654321,B-002
+                    </p>
+                </div>
+                
+                <form id="csvForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Seleccionar archivo CSV</label>
+                        <input type="file" id="csvFile" accept=".csv" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               required>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" 
+                                class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            Importar
+                        </button>
+                        <button type="button" onclick="closeModal('csvModal')" 
+                                class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="csvMessage" class="mt-4 hidden p-3 rounded-lg text-sm"></div>
+                <div id="csvProgress" class="mt-4 hidden">
+                    <div class="bg-gray-200 rounded-full h-2">
+                        <div id="csvProgressBar" class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2" id="csvProgressText">Procesando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Listado de Pacientes -->
+    <div id="listModal" class="modal">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl mx-4 w-full h-5/6 overflow-hidden fade-in">
+            <div class="p-6 h-full flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">📋 Listado de Pacientes</h2>
+                    <button onclick="closeModal('listModal')" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <!-- Filtros y Controles -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+                            <input type="text" id="searchFilter" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                   placeholder="DNI o Caja">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ordenar por</label>
+                            <select id="sortBy" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                <option value="dni">DNI</option>
+                                <option value="box">Caja</option>
+                                <option value="created_at">Fecha de registro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Orden</label>
+                            <select id="sortOrder" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                <option value="asc">Ascendente</option>
+                                <option value="desc">Descendente</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 justify-between items-center">
+                        <div class="flex gap-2">
+                            <button onclick="applyFilters()" 
+                                    class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                Aplicar Filtros
+                            </button>
+                            <button onclick="clearFilters()" 
+                                    class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                Limpiar
+                            </button>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <span id="listCount">0</span> pacientes encontrados
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de Pacientes -->
+                <div class="flex-1 overflow-y-auto">
+                    <div id="patientsList" class="space-y-2">
+                        <!-- Los pacientes se cargan dinámicamente aquí -->
+                    </div>
+                    <div id="listLoading" class="text-center py-8 text-gray-500">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
+                        Cargando pacientes...
+                    </div>
+                    <div id="listEmpty" class="text-center py-8 text-gray-500 hidden">
+                        <div class="text-4xl mb-2">📝</div>
+                        <p>No hay pacientes registrados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            // Clear forms and messages
+            if (modalId === 'registerModal') {
+                document.getElementById('registerForm').reset();
+                hideMessage('registerMessage');
+            } else if (modalId === 'searchModal') {
+                document.getElementById('searchForm').reset();
+                hideMessage('searchResult');
+            } else if (modalId === 'csvModal') {
+                document.getElementById('csvForm').reset();
+                hideMessage('csvMessage');
+                document.getElementById('csvProgress').classList.add('hidden');
+            } else if (modalId === 'listModal') {
+                loadPatientsList();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Close modal on background click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                closeModal(e.target.id);
+            }
+        });
+
+        // Message functions
+        function showMessage(elementId, message, type = 'success') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `mt-4 p-3 rounded-lg text-sm ${type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`;
+            element.classList.remove('hidden');
+            
+            if (type === 'error') {
+                element.classList.add('shake');
+                setTimeout(() => element.classList.remove('shake'), 500);
+            }
+        }
+
+        function hideMessage(elementId) {
+            document.getElementById(elementId).classList.add('hidden');
+        }
+
+        // Export data
+        async function exportData() {
+            try {
+                const response = await fetch('api/export.php');
+                const blob = await response.blob();
+                
+                if (response.ok) {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `pacientes_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    alert('Error al exportar los datos');
+                }
+            } catch (error) {
+                alert('Error de conexión al exportar');
+            }
+        }
+
+        // Load patients list
+        async function loadPatientsList() {
+            const listElement = document.getElementById('patientsList');
+            const loadingElement = document.getElementById('listLoading');
+            const emptyElement = document.getElementById('listEmpty');
+            const countElement = document.getElementById('listCount');
+            
+            // Show loading
+            loadingElement.classList.remove('hidden');
+            listElement.innerHTML = '';
+            emptyElement.classList.add('hidden');
+            
+            try {
+                const searchFilter = document.getElementById('searchFilter').value;
+                const sortBy = document.getElementById('sortBy').value;
+                const sortOrder = document.getElementById('sortOrder').value;
+                
+                const params = new URLSearchParams({
+                    search: searchFilter,
+                    sort_by: sortBy,
+                    sort_order: sortOrder
+                });
+                
+                const response = await fetch(`api/list.php?${params}`);
+                const data = await response.json();
+                
+                loadingElement.classList.add('hidden');
+                
+                if (data.success && data.patients.length > 0) {
+                    renderPatientsList(data.patients);
+                    countElement.textContent = data.patients.length;
+                } else {
+                    emptyElement.classList.remove('hidden');
+                    countElement.textContent = '0';
+                }
+            } catch (error) {
+                loadingElement.classList.add('hidden');
+                listElement.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar los pacientes</div>';
+                countElement.textContent = '0';
+            }
+        }
+
+        // Render patients list
+        function renderPatientsList(patients) {
+            const listElement = document.getElementById('patientsList');
+            
+            listElement.innerHTML = patients.map(patient => `
+                <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-sm font-medium text-gray-600">DNI:</span>
+                                <span class="text-lg font-bold text-gray-800">${patient.dni}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-gray-600">Caja:</span>
+                                <span class="text-lg font-bold text-blue-600">${patient.box}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-gray-500">
+                                ${new Date(patient.created_at).toLocaleDateString('es-AR', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                })}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                ${new Date(patient.created_at).toLocaleTimeString('es-AR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Apply filters
+        function applyFilters() {
+            loadPatientsList();
+        }
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('searchFilter').value = '';
+            document.getElementById('sortBy').value = 'dni';
+            document.getElementById('sortOrder').value = 'asc';
+            loadPatientsList();
+        }
+
+        // Register patient
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const dni = document.getElementById('registerDni').value.trim();
+            const box = document.getElementById('registerBox').value.trim();
+            
+            if (!dni || !box) {
+                showMessage('registerMessage', 'Por favor complete todos los campos', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('api/register.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ dni, box })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('registerMessage', data.message, 'success');
+                    document.getElementById('registerForm').reset();
+                    loadStats(); // Reload stats
+                } else {
+                    showMessage('registerMessage', data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('registerMessage', 'Error de conexión. Intente nuevamente.', 'error');
+            }
+        });
+
+        // Search patient
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const dni = document.getElementById('searchDni').value.trim();
+            
+            if (!dni) {
+                showMessage('searchResult', 'Por favor ingrese un DNI', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`api/search.php?dni=${encodeURIComponent(dni)}`);
+                const data = await response.json();
+                
+                const resultElement = document.getElementById('searchResult');
+                resultElement.classList.remove('hidden');
+                
+                if (data.success) {
+                    resultElement.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">📦</div>
+                            <div class="text-lg font-semibold text-gray-800">Paciente encontrado</div>
+                            <div class="text-sm text-gray-600 mb-2">DNI: ${data.patient.dni}</div>
+                            <div class="text-2xl font-bold text-blue-600">Caja: ${data.patient.box}</div>
+                        </div>
+                    `;
+                    resultElement.className = 'mt-4 p-4 rounded-lg border border-green-200 bg-green-50';
+                } else {
+                    resultElement.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">❌</div>
+                            <div class="text-lg font-semibold text-gray-800">No encontrado</div>
+                            <div class="text-sm text-gray-600">El DNI ${dni} no está registrado</div>
+                        </div>
+                    `;
+                    resultElement.className = 'mt-4 p-4 rounded-lg border border-red-200 bg-red-50';
+                }
+            } catch (error) {
+                const resultElement = document.getElementById('searchResult');
+                resultElement.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-4xl mb-2">⚠️</div>
+                        <div class="text-lg font-semibold text-gray-800">Error de conexión</div>
+                        <div class="text-sm text-gray-600">Intente nuevamente</div>
+                    </div>
+                `;
+                resultElement.className = 'mt-4 p-4 rounded-lg border border-red-200 bg-red-50';
+                resultElement.classList.remove('hidden');
+            }
+        });
+
+        // CSV Import
+        document.getElementById('csvForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showMessage('csvMessage', 'Por favor seleccione un archivo CSV', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('csv_file', file);
+            
+            // Show progress
+            document.getElementById('csvProgress').classList.remove('hidden');
+            document.getElementById('csvProgressBar').style.width = '0%';
+            document.getElementById('csvProgressText').textContent = 'Iniciando importación...';
+            
+            try {
+                const response = await fetch('api/import_csv.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Complete progress
+                document.getElementById('csvProgressBar').style.width = '100%';
+                document.getElementById('csvProgressText').textContent = 'Completado';
+                
+                setTimeout(() => {
+                    document.getElementById('csvProgress').classList.add('hidden');
+                    
+                    if (data.success) {
+                        showMessage('csvMessage', `Importación exitosa. ${data.imported} registros importados, ${data.duplicates} duplicados omitidos.`, 'success');
+                        document.getElementById('csvForm').reset();
+                        loadStats(); // Reload stats
+                    } else {
+                        showMessage('csvMessage', data.message, 'error');
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                document.getElementById('csvProgress').classList.add('hidden');
+                showMessage('csvMessage', 'Error de conexión. Intente nuevamente.', 'error');
+            }
+        });
+
+        // Add event listeners for list filters
+        document.getElementById('searchFilter').addEventListener('input', function() {
+            // Debounce search
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                loadPatientsList();
+            }, 300);
+        });
+
+        document.getElementById('sortBy').addEventListener('change', loadPatientsList);
+        document.getElementById('sortOrder').addEventListener('change', loadPatientsList);
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('api/stats.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalPatients').textContent = data.total_patients;
+                    document.getElementById('totalBoxes').textContent = data.total_boxes;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load stats on page load
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>
