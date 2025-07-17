@@ -1,5 +1,3 @@
-# .htaccess - Configuración para el sistema de archivo de pacientes
-
 # Habilitar reescritura de URLs
 RewriteEngine On
 

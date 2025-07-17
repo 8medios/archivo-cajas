@@ -5,8 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonResponse(false, 'Método no permitido');
 }
 
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$boxName = isset($_GET['boxName']) ? trim($_GET['boxName']) : ''; // Nuevo parámetro para filtrar por caja exacta
+$search = isset($_GET['search']) ? trim($_GET['search']) : ''; 
 $sortBy = isset($_GET['sort_by']) ? trim($_GET['sort_by']) : 'dni';
 $sortOrder = isset($_GET['sort_order']) ? trim($_GET['sort_order']) : 'asc';
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -57,10 +56,10 @@ try {
     $stmt->execute();
     $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Total de pacientes únicos (mantener esta parte igual ya que cuenta todos los DNI únicos)
+    // Total de pacientes únicos 
     $countSql = "SELECT COUNT(*) FROM (SELECT MAX(id) as id FROM patients GROUP BY dni) AS sub";
     
-    // Si hay un filtro de caja exacto, ajustamos el conteo total para reflejar solo esa caja
+    // Si hay un filtro de caja exacto, ajusto el conteo total para reflejar solo esa caja
     if (!empty($boxName)) {
         $countSql = "SELECT COUNT(*) FROM (SELECT MAX(p.id) FROM patients p WHERE p.box = :boxName GROUP BY p.dni) AS sub";
         $countStmt = $pdo->prepare($countSql);
@@ -88,7 +87,7 @@ try {
         ],
         'filters' => [
             'search' => $search,
-            'boxName' => $boxName, // Añadido el nuevo parámetro
+            'boxName' => $boxName, 
             'sort_by' => $sortBy,
             'sort_order' => $sortOrder
         ]

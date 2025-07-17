@@ -107,24 +107,24 @@
         </button>
       </div>
 
-      <!-- Stats (Optional) -->
+      <!-- Stats -->
       <div class="mt-8 max-w-md mx-auto">
         <div class="bg-white rounded-xl shadow-lg p-6">
           <h3 class="text-lg font-semibold text-gray-800 mb-4">
             📊 Estadísticas
           </h3>
           <div class="grid grid-cols-2 gap-4 text-center">
-            <div class="bg-blue-50 rounded-lg p-3">
+            <div class="bg-blue-50 rounded-lg p-3" onclick="openModal('listModal')">
               <div class="text-2xl font-bold text-blue-600" id="totalPatients">
                 -
               </div>
               <div class="text-sm text-gray-600">Total Pacientes</div>
             </div>
-            <div class="bg-green-50 rounded-lg p-3">
+            <div class="bg-green-50 rounded-lg p-3" onclick="openModal('boxesModal')">
               <div class="text-2xl font-bold text-green-600" id="totalBoxes">
                 -
               </div>
-              <div class="text-sm text-gray-600">Cajas Usadas</div>
+              <div class="text-sm text-gray-600" >Cajas Usadas</div>
             </div>
           </div>
         </div>
@@ -198,6 +198,18 @@
         </div>
       </div>
     </div>
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-center mt-4 mb-8">
+            <a
+              href="extras/manual_user.html"
+              target="_blank"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+            >
+              📚 Manual de Usuario
+            </a>
+        </div>
+
+        </div>
 
     <!-- Modal: Buscar Paciente -->
     <div id="searchModal" class="modal">

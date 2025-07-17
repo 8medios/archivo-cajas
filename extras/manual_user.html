@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manual de Usuario - Archivo de Pacientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos base y tipografía */
+        body {
+            font-family: 'Inter', sans-serif; /* Fuente moderna y legible */
+            line-height: 1.7; /* Mayor interlineado para mejor lectura */
+            color: #374151; /* Gris oscuro para el texto */
+        }
+        h1, h2, h3 {
+            font-weight: 700; /* Negrita */
+            color: #1e3a8a; /* Azul oscuro para títulos */
+        }
+        h1 {
+            font-size: 2.5rem; /* Título principal grande */
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        h2 {
+            font-size: 2rem; /* Subtítulos de sección */
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e0e7ff; /* Línea sutil */
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.6rem; /* Subtítulos de pasos */
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            color: #2563eb; /* Azul medio */
+        }
+        section {
+            background-color: #ffffff;
+            border-radius: 1rem; /* Esquinas más redondeadas */
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05); /* Sombra suave pero distintiva */
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        ul, ol {
+            margin-bottom: 1rem;
+            padding-left: 1.8rem; /* Más espacio para listas */
+        }
+        li {
+            margin-bottom: 0.6rem;
+        }
+        code {
+            background-color: #eef2ff; /* Fondo claro para código */
+            padding: 0.25rem 0.6rem;
+            border-radius: 0.375rem;
+            font-family: 'Fira Mono', 'Cascadia Code', monospace;
+            font-size: 0.9em;
+            color: #4338ca; /* Texto morado para código */
+        }
+        .feature-item {
+            background: #e0e7ff; /* Fondo para ítems de características */
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid #4f46e5; /* Borde izquierdo azul/índigo */
+            font-weight: 600;
+            color: #3730a3;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-indigo-800 mb-8">Manual de Usuario - Sistema de Archivo de Pacientes</h1>
+
+        <section>
+            <h2>Introducción</h2>
+            <p>El <strong>Sistema de Archivo de Pacientes</strong> es una aplicación web responsiva diseñada para simplificar la gestión de un archivo físico de pacientes. Permite registrar y buscar pacientes de manera eficiente utilizando su DNI y la ubicación de la caja donde se encuentra su expediente.</p>
+        </section>
+
+        <section>
+            <h2>Características Principales</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="feature-item">Interfaz móvil: Diseño optimizado para dispositivos móviles.</div>
+                <div class="feature-item">Registro de pacientes: Asocia un DNI con un número de caja específico.</div>
+                <div class="feature-item">Búsqueda rápida: Encuentra rápidamente la caja de un paciente por su DNI.</div>
+                <div class="feature-item">Importación CSV: Carga masiva de pacientes desde un archivo CSV.</div>
+                <div class="feature-item">Validación de datos: Verificación de DNI y prevención de duplicados.</div>
+                <div class="feature-item">Estadísticas: Visualización de totales de pacientes y cajas utilizadas.</div>
+                <div class="feature-item">Gestión completa de DNI: Listar, editar, mover y eliminar registros.</div>
+                <div class="feature-item">Gestión de Cajas: Visualizar pacientes por caja y renombrar cajas.</div>
+                <div class="feature-item">Exportación de datos: Guarda los registros en formato CSV.</div>
+            </div>
+        </section>
+
+        <section>
+            <h2><b>Uso del Sistema</b></h2>
+
+            <h3><b>1. Registrar Paciente</b></h3>
+            <p>Sigue estos pasos para registrar un nuevo paciente en el sistema:</p>
+            <ol>
+                <li>Navega a la sección de **Registro de Pacientes**.</li>
+                <li>Ingresa el <strong>DNI</strong> del paciente (solo números, entre 7 y 8 dígitos).</li>
+                <li>Ingresa el <strong>Número de Caja</strong> donde se archivará el paciente (ejemplo: A-001, B-002).</li>
+                <li>Confirma para guardar la información.</li>
+            </ol>
+
+            <h3><b>2. Buscar Paciente</b></h3>
+            <p>Para encontrar la ubicación de la caja de un paciente:</p>
+            <ol>
+                <li>Dirígete a la sección de **Búsqueda de Pacientes**.</li>
+                <li>Ingresa el <strong>DNI</strong> del paciente que deseas buscar.</li>
+                <li>Inicia la búsqueda.</li>
+                <li>El sistema te mostrará la caja donde está archivado el paciente.</li>
+            </ol>
+
+            <h3><b>3. Importar CSV (Carga Masiva)</b></h3>
+            <p>Puedes importar múltiples pacientes a la vez desde un archivo CSV:</p>
+            <ol>
+                <li>Accede a la función de **Importar CSV**.</li>
+                <li>Asegúrate de que tu archivo CSV tenga el siguiente formato:<br>
+                    <code class="block">DNI,Caja</code><br>
+                    <code class="block">12345678,A-001</code><br>
+                    <code class="block">87654321,B-002</code>
+                </li>
+                <li>Selecciona el archivo CSV desde tu computadora.</li>
+                <li>Procede con la importación.</li>
+            </ol>
+
+            <h3><b>4. Listar y Gestionar Pacientes</b></h3>
+            <p>Para ver y administrar la lista completa de pacientes:</p>
+            <ol>
+                <li>Ve al **Listado de Pacientes**.</li>
+                <li>Usa el campo de búsqueda para filtrar pacientes por DNI o número de caja.</li>
+                <li>Utiliza las opciones <strong>"Ordenar por"</strong> y <strong>"Orden"</strong> para organizar la lista.</li>
+                <li>Desde esta lista, puedes realizar las siguientes acciones por cada paciente:
+                    <ul>
+                        <li><strong>Editar Paciente:</strong> Para cambiar el DNI o la caja de un paciente.</li>
+                        <li><strong>Mover Paciente de Caja:</strong> Para asignar un paciente a una nueva caja.</li>
+                        <li><strong>Eliminar Paciente:</strong> Para borrar permanentemente un registro de paciente. Se te pedirá confirmación.</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3><b>5. Gestionar Cajas</b></h3>
+            <p>Para administrar las cajas y sus contenidos:</p>
+            <ol>
+                <li>Accede a la sección de **Gestión de Cajas**.</li>
+                <li>Verás un listado de las cajas existentes.</li>
+                <li>Puedes hacer clic en el nombre de una caja para ver todos los pacientes archivados en ella.</li>
+                <li><strong>Renombrar Caja:</strong> Puedes cambiar el nombre de una caja existente.</li>
+            </ol>
+
+            <h3><b>6. Exportar Datos</b></h3>
+            <p>Puedes exportar todos los datos de los pacientes a un archivo CSV para guardarlos o utilizarlos en otras aplicaciones:</p>
+            <ol>
+                <li>Utiliza la función de **Exportar Datos**.</li>
+                <li>El sistema generará un archivo CSV con todos los registros de pacientes y lo descargará en tu dispositivo.</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2><b>Problemas Comunes</b></h2>
+            <p>Si encuentras algún problema o tienes dudas al usar el sistema, considera los siguientes puntos:</p>
+            <ul>
+                <li>Verifica que hayas ingresado correctamente los datos (DNI y número de caja).</li>
+                <li>Para la importación CSV, asegúrate de que el formato del archivo sea el correcto.</li>
+                
+            </ul>
+        </section>
+    </div>
+    <a href="manual_dev.html">Manual de Desarrollador</a>
+</body>
+</html>

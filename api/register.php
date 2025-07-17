@@ -1,5 +1,4 @@
 <?php
-// api/register.php - Registrar nuevo paciente
 
 require_once 'config.php';
 

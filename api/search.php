@@ -1,5 +1,4 @@
 <?php
-// api/search.php - Buscar paciente por DNI
 
 require_once 'config.php';
 

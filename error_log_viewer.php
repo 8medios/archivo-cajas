@@ -1,15 +1,7 @@
 <?php
-// error_log_viewer.php - Visor de logs de Apache (compatible con Windows)
 
-// CONFIGURACIÓN: AJUSTA ESTA RUTA SEGÚN TU INSTALACIÓN DE XAMPP
-// Por ejemplo, si XAMPP está en C:\xampp, la ruta sería:
 $logFilePath = 'C:\\xampp\\apache\\logs\\error.log';
-// Si quieres ver los logs de PHP en XAMPP, podría ser:
-// $logFilePath = 'C:\\xampp\\php\\logs\\php_error_log';
-// Asegúrate de usar doble barra invertida (\\) para las rutas de Windows en PHP.
 
-// --- ADVERTENCIA DE SEGURIDAD IMPORTANTE ---
-// --- Asegúrate de que el usuario de PHP tenga PERMISOS DE LECTURA sobre este archivo.
 
 $ip = isset($_SERVER['HTTP_CLIENT_IP'])
     ? $_SERVER['HTTP_CLIENT_IP']
@@ -17,11 +9,11 @@ $ip = isset($_SERVER['HTTP_CLIENT_IP'])
         ? $_SERVER['HTTP_X_FORWARDED_FOR']
         : $_SERVER['REMOTE_ADDR']);
 
-$searchFilter = isset($_GET['grep']) ? $_GET['grep'] : $ip; // Valor del filtro
-$n = isset($_GET['n']) ? (int)$_GET['n'] : 300; // Número de líneas a mostrar
+$searchFilter = isset($_GET['grep']) ? $_GET['grep'] : $ip; 
+$n = isset($_GET['n']) ? (int)$_GET['n'] : 300; 
 
-$salida = ''; // Inicializar la salida del log
-$errorMessage = ''; // Para mensajes de error al cargar el log
+$salida = ''; 
+$errorMessage = ''; 
 
 try {
     if (!file_exists($logFilePath)) {
@@ -41,16 +33,13 @@ try {
 
     $filteredLogs = [];
     foreach ($allLogs as $logLine) {
-        // Aplicar el filtrado (similar a 'grep') directamente en PHP
-        // strpos() es más eficiente para búsquedas simples de subcadenas.
-        // stripos() para búsqueda insensible a mayúsculas/minúsculas.
+
         if (empty($searchFilter) || stripos($logLine, $searchFilter) !== false) {
             $filteredLogs[] = $logLine;
         }
     }
 
-    // Obtener las últimas N líneas (similar a 'tail -n')
-    // array_slice con un índice negativo obtiene los últimos N elementos.
+
     $linesToShow = array_slice($filteredLogs, -$n);
     $salida = implode("\n", $linesToShow);
 
@@ -61,7 +50,7 @@ try {
 $autoRefreshActive = isset($_GET['autoRefresh']) ? $_GET['autoRefresh'] : 'false';
 $refreshInterval = isset($_GET['interval']) ? (int)$_GET['interval'] : 5;
 
-// La descripción del comando ahora es informativa, no el comando shell real
+
 $commandDisplay = "Mostrando las últimas " . $n . " líneas del log: " . htmlspecialchars($logFilePath);
 if (!empty($searchFilter)) {
     $commandDisplay .= " | Filtrando por: '" . htmlspecialchars($searchFilter) . "'";
@@ -75,7 +64,7 @@ if (!empty($searchFilter)) {
     <title>ERRORLOG</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        /* CSS proporcionado por el usuario */
+
         :root {
             --primary-color: #4E73DF;
             --primary-hover: #2C4FA4;
@@ -603,7 +592,6 @@ if (!empty($searchFilter)) {
         logOutput.classList.toggle('light-theme-output');
     }
 
-    // Inicializar el auto-refresh cuando la página carga
     document.addEventListener('DOMContentLoaded', initAutoRefresh);
 
 </script>

@@ -1,5 +1,5 @@
 <?php
-// api/stats.php - Obtener estadísticas del sistema
+
 
 require_once 'config.php';
 

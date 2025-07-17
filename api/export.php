@@ -5,11 +5,13 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename=pacientes_export.csv');
 
 $output = fopen('php://output', 'w');
-fputcsv($output, ['DNI', 'Caja', 'Fecha de Registro']);
+
+// Cabecera del CSV: Solo DNI y Caja, usando ';' como delimitador
+fputcsv($output, ['DNI', 'Caja'], ';');
 
 try {
     $sql = "
-        SELECT p.dni, p.box, p.created_at
+        SELECT p.dni, p.box
         FROM patients p
         INNER JOIN (
             SELECT MAX(id) as id
@@ -24,13 +26,12 @@ try {
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         fputcsv($output, [
             $row['dni'],
-            $row['box'],
-            date('d/m/Y H:i', strtotime($row['created_at']))
-        ]);
+            $row['box']
+        ], ';'); //
     }
 } catch (PDOException $e) {
     error_log("Error en export.php: " . $e->getMessage());
-    fputcsv($output, ['Error al generar el CSV']);
+    fputcsv($output, ['Error al generar el CSV'], ',');
 }
 
 fclose($output);

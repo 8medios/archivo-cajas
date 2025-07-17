@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manual de Desarrollo - Sistema de Archivo de Pacientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        line-height: 1.7;
+        color: #374151;
+      }
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1e3a8a;
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+      h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e3a8a;
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #e0e7ff;
+        padding-bottom: 0.5rem;
+      }
+      h3 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #2563eb;
+        margin-top: 1.5rem;
+        margin-bottom: 0.8rem;
+      }
+      p {
+        margin-bottom: 1rem;
+      }
+      ul,
+      ol {
+        margin-bottom: 1rem;
+        padding-left: 1.8rem;
+      }
+      li {
+        margin-bottom: 0.6rem;
+      }
+      code {
+        background-color: #eef2ff;
+        padding: 0.25rem 0.6rem;
+        border-radius: 0.375rem;
+        font-family: 'Fira Mono', 'Cascadia Code', monospace;
+        font-size: 0.9em;
+        color: #4338ca;
+      }
+      pre {
+        background-color: #f3f4f6; /* Fondo más oscuro para bloques de código */
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto; /* Para scroll horizontal en código largo */
+        margin-bottom: 1rem;
+      }
+      pre code {
+        background-color: transparent; /* Quita el fondo del `code` dentro de `pre` */
+        padding: 0;
+        border-radius: 0;
+        color: inherit; /* Hereda el color */
+      }
+      strong {
+        font-weight: 700;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid #e5e7eb;
+        margin: 2rem 0;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans"
+  >
+    <div class="container mx-auto px-4 py-8">
+      <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+        <h1>Manual de Desarrollo - Sistema de Archivo de Pacientes</h1>
+
+        <hr />
+
+        <h2>1. Introducción 🚀</h2>
+        <p>
+          El Sistema de Archivo de Pacientes es una aplicación web ligera y
+          responsiva diseñada para digitalizar la gestión de expedientes
+          físicos de pacientes. Su objetivo principal es permitir un registro
+          eficiente y una búsqueda rápida de pacientes asociando su DNI con la
+          ubicación de una caja física.
+        </p>
+
+        <hr />
+
+        <h2>2. Arquitectura del Sistema 🏗️</h2>
+        <p>
+          La aplicación sigue un modelo cliente-servidor con una clara
+          separación de responsabilidades:
+        </p>
+        <ul>
+          <li>
+            <strong>Frontend (Cliente):</strong> Implementado con
+            <strong>HTML</strong>, <strong>JavaScript</strong> puro y
+            <strong>Tailwind CSS</strong>. Es responsable de la interfaz de
+            usuario, la lógica de presentación y la interacción con el usuario.
+            Se comunica con el backend a través de peticiones HTTP (Fetch API).
+          </li>
+          <li>
+            <strong>Backend (Servidor/API):</strong> Desarrollado en
+            <strong>PHP</strong>, gestiona la lógica de negocio, la interacción
+            con la base de datos y la provisión de datos al frontend a través
+            de una API RESTful.
+          </li>
+        </ul>
+
+        <hr />
+
+        <h2>3. Estructura de Directorios 📂</h2>
+        <p>El proyecto está organizado de la siguiente manera:</p>
+        <pre><code>└── 8medios-archivo-cajas/
+    ├── error_log_clear.php         # Script para limpiar el log de errores de Apache
+    ├── error_log_viewer.php        # Script para visualizar el log de errores de Apache
+    ├── index.html                  # Interfaz principal de la aplicación (Frontend)
+    └── api/                        # Directorio que contiene los endpoints de la API PHP
+        ├── config.php              # Archivo de configuración de la base de datos
+        ├── delete_dni.php          # Elimina un registro de DNI
+        ├── edit_dni.php            # Edita un registro de DNI (DNI o Caja)
+        ├── export.php              # Exporta todos los datos a CSV
+        ├── import_csv.php          # Importa datos desde un archivo CSV
+        ├── list.php                # Lista todos los pacientes o filtra
+        ├── move_dni.php            # Mueve un DNI a una nueva caja
+        ├── patients_by_box.php     # Lista pacientes por una caja específica
+        ├── register.php            # Registra un nuevo paciente
+        ├── rename_box.php          # Renombra una caja
+        ├── search.php              # Busca un paciente por DNI
+        ├── stats.php               # Proporciona estadísticas generales (total pacientes, total cajas)
+        └── .htaccess               # Reglas de reescritura y seguridad del servidor Apache
+</code></pre>
+
+        <hr />
+
+        <h2>4. API del Backend (PHP) 🛠️</h2>
+        <p>
+          Los scripts PHP en el directorio <code>api/</code> actúan como los
+          endpoints de la API. Todos esperan y devuelven respuestas en formato
+          <strong>JSON</strong>, a menos que se indique lo contrario (como en
+          <code>export.php</code>).
+        </p>
+
+        <h3>Consideraciones Generales:</h3>
+        <ul>
+          <li>
+            <strong>Conexión a Base de Datos:</strong> La conexión a la base de
+            datos (MySQL/MariaDB) se maneja a través de
+            <code>config.php</code>. Es crucial configurar correctamente esta
+            base de datos antes del despliegue.
+          </li>
+          <li>
+            <strong>Manejo de Errores:</strong> Los scripts PHP deben incluir
+            un robusto manejo de errores y devolver mensajes de error
+            descriptivos en formato JSON.
+          </li>
+          <li>
+            <strong>Seguridad:</strong> El archivo <code>.htaccess</code>
+            incluye configuraciones de seguridad importantes.
+          </li>
+        </ul>
+
+        <h3>Endpoints Detallados:</h3>
+
+        <p>1. <strong><code>api/register.php</code></strong></p>
+        <ul>
+          <li><strong>Funcionalidad:</strong> Registra un nuevo paciente.</li>
+          <li><strong>Método:</strong> <code>POST</code></li>
+          <li>
+            <strong>Parámetros (JSON <code>body</code>):</strong>
+            <ul>
+              <li><code>dni</code>: DNI del paciente (string).</li>
+              <li><code>box</code>: Número de caja (string).</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "message": "Paciente registrado
+                  exitosamente."}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Error al registrar
+                  paciente."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>2. <strong><code>api/search.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Busca la caja asociada a un DNI.
+          </li>
+          <li>
+            <strong>Método:</strong> <code>GET</code> o <code>POST</code>
+            (aunque es más común <code>GET</code> para búsqueda).
+          </li>
+          <li>
+            <strong>Parámetros (Query String o JSON <code>body</code>):</strong>
+            <ul>
+              <li><code>dni</code>: DNI del paciente a buscar (string).</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "box": "A-001", "dni":
+                  "12345678"}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Paciente no
+                  encontrado."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>3. <strong><code>api/import_csv.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Importa múltiples registros de
+            pacientes desde un archivo CSV.
+          </li>
+          <li>
+            <strong>Método:</strong> <code>POST</code> (multipart/form-data, ya
+            que implica subida de archivo).
+          </li>
+          <li>
+            <strong>Parámetros:</strong>
+            <ul>
+              <li>
+                <code>csv_file</code>: El archivo CSV subido. El formato
+                esperado dentro del CSV es <code>DNI,Caja</code> por línea.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "message": "Importación completada. X
+                  pacientes añadidos, Y duplicados."}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Error en la
+                  importación."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>4. <strong><code>api/list.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Lista todos los pacientes
+            registrados, con opciones de filtrado y ordenación.
+          </li>
+          <li><strong>Método:</strong> <code>GET</code></li>
+          <li>
+            <strong>Parámetros (Query String, opcionales):</strong>
+            <ul>
+              <li><code>search</code>: Cadena de búsqueda para DNI o Caja
+                (string).</li>
+              <li><code>sortBy</code>: Campo para ordenar (<code>dni</code>,
+                <code>box</code>, <code>created_at</code>).</li>
+              <li><code>sortOrder</code>: Orden (<code>asc</code>,
+                <code>desc</code>).</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "patients": [{"dni": "...", "box":
+                  "...", "created_at": "..."}, ...], "total": X}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Error al obtener
+                  lista."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>5. <strong><code>api/edit_dni.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Edita el DNI o la caja de un
+            paciente existente.
+          </li>
+          <li>
+            <strong>Método:</strong> <code>PUT</code> (o <code>POST</code> si no
+            se admite <code>PUT</code> en el servidor).
+          </li>
+          <li>
+            <strong>Parámetros (JSON <code>body</code>):</strong>
+            <ul>
+              <li><code>old_dni</code>: DNI actual del paciente a editar
+                (string).</li>
+              <li><code>new_dni</code>: Nuevo DNI (opcional, string).</li>
+              <li><code>new_box</code>: Nueva caja (opcional, string).</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "message": "Paciente actualizado
+                  exitosamente."}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Error al actualizar
+                  paciente."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>6. <strong><code>api/move_dni.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Mueve un paciente (DNI) a una nueva
+            caja.
+          </li>
+          <li>
+            <strong>Método:</strong> <code>PUT</code> (o <code>POST</code>).
+          </li>
+          <li>
+            <strong>Parámetros (JSON <code>body</code>):</strong>
+            <ul>
+              <li><code>dni</code>: DNI del paciente a mover (string).</li>
+              <li><code>new_box</code>: Nueva caja a la que mover (string).</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "message": "Paciente movido
+                  exitosamente."}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Error al mover
+                  paciente."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>7. <strong><code>api/delete_dni.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Elimina un registro de paciente por
+            DNI.
+          </li>
+          <li>
+            <strong>Método:</strong> <code>DELETE</code> (o <code>POST</code>).
+          </li>
+          <li>
+            <strong>Parámetros (JSON <code>body</code> o Query String):</strong>
+            <ul>
+              <li><code>dni</code>: DNI del paciente a eliminar (string).</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "message": "Paciente eliminado
+                  exitosamente."}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Error al eliminar
+                  paciente."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>8. <strong><code>api/stats.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Proporciona estadísticas generales
+            del sistema.
+          </li>
+          <li><strong>Método:</strong> <code>GET</code></li>
+          <li><strong>Parámetros:</strong> Ninguno.</li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "total_patients": X, "total_boxes":
+                  Y}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Error al obtener
+                  estadísticas."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>9. <strong><code>api/patients_by_box.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Lista todos los pacientes que se
+            encuentran en una caja específica.
+          </li>
+          <li><strong>Método:</strong> <code>GET</code></li>
+          <li>
+            <strong>Parámetros (Query String):</strong>
+            <ul>
+              <li><code>box</code>: Número de caja (string).</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "patients": [{"dni": "...", "box":
+                  "...", "created_at": "..."}, ...]}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Error al obtener
+                  pacientes por caja."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>10. <strong><code>api/rename_box.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Renombra una caja existente.
+          </li>
+          <li>
+            <strong>Método:</strong> <code>PUT</code> (o <code>POST</code>).
+          </li>
+          <li>
+            <strong>Parámetros (JSON <code>body</code>):</strong>
+            <ul>
+              <li><code>old_box</code>: Nombre actual de la caja (string).</li>
+              <li><code>new_box</code>: Nuevo nombre para la caja (string).</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Respuesta (JSON):</strong>
+            <ul>
+              <li>
+                <code>{"success": true, "message": "Caja renombrada
+                  exitosamente."}</code>
+              </li>
+              <li>
+                <code>{"success": false, "message": "Error al renombrar
+                  caja."}</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>11. <strong><code>api/export.php</code></strong></p>
+        <ul>
+          <li>
+            <strong>Funcionalidad:</strong> Exporta todos los datos de pacientes
+            a un archivo CSV.
+          </li>
+          <li><strong>Método:</strong> <code>GET</code></li>
+          <li><strong>Parámetros:</strong> Ninguno.</li>
+          <li>
+            <strong>Respuesta:</strong> Directamente un archivo CSV con
+            <code>Content-Type: text/csv</code>.
+          </li>
+        </ul>
+
+        <hr />
+
+        <h2>5. Archivos de Utilidad y Configuración ⚙️</h2>
+        <ul>
+          <li>
+            <strong><code>error_log_clear.php</code>:</strong> Este script
+            está diseñado para limpiar el archivo de log de errores de Apache.
+            <ul>
+              <li>
+                <strong>ADVERTENCIA DE SEGURIDAD EXTREMADAMENTE IMPORTANTE:</strong>
+                El archivo que proporcionaste indica que
+                <strong>este script NO TIENE AUTENTICACIÓN</strong>. Esto es
+                <strong>MUY PELIGROSO</strong> en un entorno de producción, ya
+                que cualquier persona que conozca la URL puede limpiar tus logs.
+                Se recomienda <strong>encarecidamente</strong> implementar
+                autenticación antes de su uso en un servidor público.
+              </li>
+              <li>
+                La ruta del log (<code>$logFilePath</code>) debe configurarse
+                según tu instalación de XAMPP o Apache.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong><code>error_log_viewer.php</code>:</strong> Similar al
+            anterior, este script permite visualizar el contenido del log de
+            errores.
+            <ul>
+              <li>
+                <strong>ADVERTENCIA DE SEGURIDAD:</strong> También es crítico
+                que este script esté protegido con autenticación en un entorno
+                de producción.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong><code>.htaccess</code>:</strong> Contiene configuraciones
+            para el servidor Apache, incluyendo:
+            <ul>
+              <li>
+                <strong>CORS (Cross-Origin Resource Sharing):</strong> Permite
+                solicitudes desde diferentes orígenes, esencial para el
+                funcionamiento de la API.
+              </li>
+              <li>
+                <strong>Seguridad:</strong> Restringe el acceso a
+                <code>config.php</code> y potencialmente a
+                <code>setup_database.php</code> (comentado en el archivo
+                proporcionado).
+              </li>
+              <li>
+                <strong>Subida de Archivos:</strong> Configura
+                <code>upload_max_filesize</code> y
+                <code>post_max_size</code> para la importación CSV.
+              </li>
+              <li>
+                <strong>Manejo de Errores:</strong> Define páginas de error
+                personalizadas (<code>ErrorDocument 404 /index.html</code>).
+              </li>
+              <li>
+                <strong>Compresión GZIP:</strong> Optimiza la entrega de
+                contenido.
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <hr />
+
+        <h2>6. Funcionalidades del Frontend (JavaScript) 🖥️</h2>
+        <p>
+          El <code>index.html</code> es el punto de entrada de la aplicación y
+          utiliza JavaScript para interactuar con la API del backend.
+        </p>
+        <ul>
+          <li>
+            <strong><code>openModal(modalId)</code> /
+              <code>closeModal(modalId)</code>:</strong> Funciones para
+            controlar la visibilidad de los modales (ventanas emergentes) que
+            contienen los formularios para registrar, buscar, importar, listar y
+            gestionar.
+          </li>
+          <li>
+            <strong>Formularios de Interacción:</strong>
+            <ul>
+              <li>
+                <strong><code>registerForm</code>:</strong> Envía datos a
+                <code>api/register.php</code>.
+              </li>
+              <li>
+                <strong><code>searchForm</code>:</strong> Envía DNI a
+                <code>api/search.php</code> y muestra el resultado.
+              </li>
+              <li>
+                <strong><code>csvForm</code>:</strong> Gestiona la selección del
+                archivo y la subida a <code>api/import_csv.php</code>. Incluye
+                un indicador de progreso (<code>csvProgress</code>).
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Listado de Pacientes (<code>loadPatientsList()</code>):</strong>
+            <ul>
+              <li>Realiza una petición <code>GET</code> a
+                <code>api/list.php</code>.
+              </li>
+              <li>
+                Implementa <strong>filtros</strong> (<code>searchFilter</code>)
+                y <strong>ordenación</strong> (<code>sortBy</code>,
+                <code>sortOrder</code>).
+              </li>
+              <li>
+                Maneja el <strong>debounce</strong> para el filtro de búsqueda
+                para evitar peticiones excesivas.
+              </li>
+              <li>
+                Renderiza la lista de pacientes dinámicamente en el elemento
+                <code>patientsList</code>.
+              </li>
+              <li>
+                Incluye lógica para editar, mover y eliminar pacientes, que a su
+                vez llamarían a <code>api/edit_dni.php</code>,
+                <code>api/move_dni.php</code>, y
+                <code>api/delete_dni.php</code> respectivamente.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Gestión de Cajas (<code>boxesModal</code>):</strong>
+            <ul>
+              <li>
+                Interactuaría con <code>api/patients_by_box.php</code> para ver
+                el contenido de una caja.
+              </li>
+              <li>
+                Llamaría a <code>api/rename_box.php</code> para cambiar el
+                nombre de una caja.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Estadísticas (<code>loadStats()</code>):</strong>
+            <ul>
+              <li>Realiza una petición <code>GET</code> a
+                <code>api/stats.php</code> al cargar la página.
+              </li>
+              <li>
+                Actualiza los elementos <code>totalPatients</code> y
+                <code>totalBoxes</code> con los datos recibidos.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Exportar Datos (<code>exportData()</code>):</strong>
+            <ul>
+              <li>
+                Inicia la descarga de un archivo CSV llamando directamente a
+                <code>api/export.php</code>.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Manejo de Mensajes (<code>showMessage()</code>):</strong>
+            Función genérica para mostrar mensajes de éxito o error al usuario.
+          </li>
+        </ul>
+
+        <hr />
+
+        <h2>7. Configuración y Despliegue 🚀</h2>
+        <p>
+          Para que la aplicación funcione, es necesario un servidor web (como
+          Apache con PHP) y una base de datos (MySQL/MariaDB).
+        </p>
+        <ol>
+          <li>
+            <strong>Configuración de la Base de Datos:</strong>
+            <ul>
+              <li>Crea una base de datos MySQL/MariaDB.</li>
+              <li>
+                Edita <code>api/config.php</code> con las credenciales y el
+                nombre de tu base de datos.
+              </li>
+              <li>
+                Deberás ejecutar scripts SQL (no proporcionados en el archivo
+                <code>.txt</code>) para crear las tablas necesarias
+                (probablemente una tabla <code>patients</code> con campos como
+                <code>dni</code>, <code>box</code>, <code>created_at</code>). Si
+                existe un <code>setup_database.php</code> (comentado en
+                <code>.htaccess</code>), este podría ser el script para la
+                configuración inicial.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Servidor Web:</strong>
+            <ul>
+              <li>
+                Coloca el contenido del directorio
+                <code>8medios-archivo-cajas/</code> en el directorio raíz de tu
+                servidor web (e.g., <code>htdocs</code> en XAMPP).
+              </li>
+              <li>
+                Asegúrate de que PHP esté correctamente configurado y que el
+                módulo <code>mod_rewrite</code> de Apache esté habilitado si
+                usas <code>.htaccess</code> para URLs amigables (aunque en este
+                caso, es más para seguridad y CORS).
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Permisos de Archivos:</strong>
+            <ul>
+              <li>
+                Verifica que el servidor web tenga los permisos necesarios para
+                leer y escribir en los directorios, especialmente para la
+                función de importación/exportación de CSV.
+              </li>
+            </ul>
+          </li>
+        </ol>
+
+        <hr />
+
+        <h2>8. Consideraciones de Seguridad Adicionales 🔒</h2>
+        <p>
+          Además de las advertencias mencionadas para
+          <code>error_log_clear.php</code> y <code>error_log_viewer.php</code>,
+          se recomienda encarecidamente implementar:
+        </p>
+        <ul>
+          <li>
+            <strong>Autenticación y Autorización:</strong> Para todas las
+            operaciones de la API que modifiquen o expongan datos sensibles
+            (registro, edición, eliminación, importación, exportación, gestión
+            de cajas), se debe implementar un sistema de autenticación de
+            usuarios y autorización de roles.
+          </li>
+          <li>
+            <strong>Validación de Entrada Rigurosa:</strong> Asegurarse de que
+            todos los datos recibidos del frontend (DNI, Caja, etc.) sean
+            validados en el backend para prevenir ataques como inyección SQL o
+            Cross-Site Scripting (XSS).
+          </li>
+          <li>
+            <strong>HTTPS:</strong> Desplegar la aplicación sobre HTTPS para
+            cifrar las comunicaciones entre el cliente y el servidor.
+          </li>
+          <li>
+            <strong>Manejo de Errores Detallado:</strong> Aunque se devuelven
+            mensajes de error JSON, asegúrate de que los errores internos del
+            servidor no revelen información sensible al usuario final.
+          </li>
+        </ul>
+        <p>
+          Este manual debería proporcionarte una base sólida para entender y
+          trabajar con el Sistema de Archivo de Pacientes.
+        </p>
+      </div>
+    </div>
+    <a href="manual_user.html">Manual de Usuarios</a>
+  </body>
+</html>
