@@ -478,6 +478,7 @@
                     showMessage('registerMessage', data.message, 'success');
                     document.getElementById('registerForm').reset();
                     loadStats(); // Reload stats
+                    loadPatientsList();
                 } else {
                     showMessage('registerMessage', data.message, 'error');
                 }
@@ -577,6 +578,7 @@
                         showMessage('csvMessage', `Importación exitosa. ${data.imported} registros importados, ${data.duplicates} duplicados omitidos.`, 'success');
                         document.getElementById('csvForm').reset();
                         loadStats(); // Reload stats
+                        loadPatientsList();
                     } else {
                         showMessage('csvMessage', data.message, 'error');
                     }

@@ -37,19 +37,25 @@ $offset = ($page - 1) * $limit;
 try {
     // Construir query base
     $whereClause = '';
-    $params = [];
+    $params = []; // Array para los parámetros de la cláusula WHERE
     
     // Agregar filtro de búsqueda si existe
     if (!empty($search)) {
-        $whereClause = "WHERE dni LIKE ? OR box LIKE ?";
+        $whereClause = "WHERE dni LIKE :searchDni OR box LIKE :searchBox"; // Usamos parámetros con nombre
         $searchTerm = "%$search%";
-        $params = [$searchTerm, $searchTerm];
+        $params[':searchDni'] = $searchTerm; // Asigna al nombre del parámetro
+        $params[':searchBox'] = $searchTerm; // Asigna al nombre del parámetro
     }
     
     // Query para obtener el total de registros
     $countSql = "SELECT COUNT(*) FROM patients $whereClause";
     $countStmt = $pdo->prepare($countSql);
-    $countStmt->execute($params);
+    
+    // Enlazar parámetros para la consulta de conteo
+    foreach ($params as $key => $value) {
+        $countStmt->bindValue($key, $value, PDO::PARAM_STR);
+    }
+    $countStmt->execute();
     $totalRecords = $countStmt->fetchColumn();
     
     // Query para obtener los registros paginados
@@ -57,13 +63,21 @@ try {
             FROM patients 
             $whereClause 
             ORDER BY $sortBy $sortOrder 
-            LIMIT ? OFFSET ?";
+            LIMIT :limit OFFSET :offset"; // Usamos parámetros con nombre para LIMIT y OFFSET
     
     $stmt = $pdo->prepare($sql);
     
-    // Agregar parámetros de limit y offset
-    $queryParams = array_merge($params, [$limit, $offset]);
-    $stmt->execute($queryParams);
+    // Enlazar los parámetros de la cláusula WHERE (si hay)
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value, PDO::PARAM_STR);
+    }
+
+    // Enlazar LIMIT y OFFSET explícitamente como enteros
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    
+    // Ejecutar la consulta (sin pasar parámetros aquí, ya están enlazados con bindValue)
+    $stmt->execute();
     
     $patients = $stmt->fetchAll();
     
