@@ -59,7 +59,7 @@ try {
     $totalRecords = $countStmt->fetchColumn();
     
     // Query para obtener los registros paginados
-    $sql = "SELECT dni, box, created_at, updated_at 
+    $sql = "SELECT id, dni, box, created_at, updated_at 
             FROM patients 
             $whereClause 
             ORDER BY $sortBy $sortOrder 

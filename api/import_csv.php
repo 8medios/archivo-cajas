@@ -1,26 +1,23 @@
 <?php
-// api/import_csv.php - Importar pacientes desde CSV
-
 require_once 'config.php';
 
-// Solo aceptar POST requests
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+header('Content-Type: application/json');
+
+// Solo POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(false, 'Método no permitido');
 }
 
-// Verificar si se subió un archivo
 if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
     jsonResponse(false, 'Error al subir el archivo');
 }
 
 $file = $_FILES['csv_file'];
 
-// Validar tipo de archivo
-if ($file['type'] !== 'text/csv' && pathinfo($file['name'], PATHINFO_EXTENSION) !== 'csv') {
-    jsonResponse(false, 'Solo se permiten archivos CSV');
-}
-
-// Validar tamaño del archivo (máximo 5MB)
 if ($file['size'] > 5 * 1024 * 1024) {
     jsonResponse(false, 'El archivo es demasiado grande (máximo 5MB)');
 }
@@ -31,95 +28,85 @@ $errors = 0;
 $errorMessages = [];
 
 try {
-    // Leer archivo CSV
     $handle = fopen($file['tmp_name'], 'r');
-    
     if (!$handle) {
         jsonResponse(false, 'No se pudo leer el archivo');
     }
-    
-    // Preparar statement para inserción
-    $stmt = $pdo->prepare("INSERT IGNORE INTO patients (dni, box) VALUES (?, ?)");
-    
-    // Leer línea por línea
+
+    $stmt = $pdo->prepare("INSERT INTO patients (dni, box) VALUES (:dni, :box)");
+    $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM patients WHERE dni = :dni");
+
     $lineNumber = 0;
-    while (($data = fgetcsv($handle, 1000, ',')) !== FALSE) {
+
+    while (($data = fgetcsv($handle, 1000, ';')) !== false) {
         $lineNumber++;
-        
-        // Saltar línea de encabezado si existe
-        if ($lineNumber === 1 && (strtolower($data[0]) === 'dni' || strtolower($data[0]) === 'documento')) {
+
+        // Saltar encabezado
+        if ($lineNumber === 1 && preg_match('/dni/i', $data[0])) {
             continue;
         }
-        
-        // Verificar que tenga al menos 2 columnas
+
         if (count($data) < 2) {
             $errors++;
             $errorMessages[] = "Línea $lineNumber: Faltan columnas";
             continue;
         }
-        
-        $dni = trim($data[0]);
-        $box = trim($data[1]);
-        
-        // Validar datos
-        if (empty($dni) || empty($box)) {
+
+        $dni = preg_replace('/\D/', '', trim($data[0] ?? '')); // Solo números
+        $box = strtoupper(trim($data[1] ?? ''));
+
+        if ($dni === '' || $box === '') {
             $errors++;
             $errorMessages[] = "Línea $lineNumber: DNI o caja vacíos";
             continue;
         }
-        
-        if (!validateDNI($dni)) {
+
+        // Validaciones básicas
+        if (strlen($dni) < 6 || strlen($dni) > 10) {
             $errors++;
             $errorMessages[] = "Línea $lineNumber: DNI inválido ($dni)";
             continue;
         }
-        
-        if (!validateBox($box)) {
+
+        if (!preg_match('/^[A-Z0-9\-]+$/', $box)) {
             $errors++;
             $errorMessages[] = "Línea $lineNumber: Caja inválida ($box)";
             continue;
         }
-        
-        // Verificar si ya existe
-        $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM patients WHERE dni = ?");
-        $checkStmt->execute([$dni]);
-        
+
+        // Verificar duplicado
+        $checkStmt->execute([':dni' => $dni]);
         if ($checkStmt->fetchColumn() > 0) {
             $duplicates++;
             continue;
         }
-        
-        // Insertar registro
-        if ($stmt->execute([$dni, $box])) {
+
+        try {
+            $stmt->execute([
+                ':dni' => $dni,
+                ':box' => $box
+            ]);
             $imported++;
-        } else {
+        } catch (PDOException $e) {
             $errors++;
             $errorMessages[] = "Línea $lineNumber: Error al insertar ($dni)";
         }
     }
-    
+
     fclose($handle);
-    
-    // Preparar mensaje de respuesta
-    $message = "Importación completada: $imported registros importados";
-    
-    if ($duplicates > 0) {
-        $message .= ", $duplicates duplicados omitidos";
-    }
-    
-    if ($errors > 0) {
-        $message .= ", $errors errores";
-    }
-    
-    jsonResponse(true, $message, [
+
+    $msg = "Importación completada: $imported registros";
+    if ($duplicates) $msg .= ", $duplicates duplicados";
+    if ($errors) $msg .= ", $errors errores";
+
+    jsonResponse(true, $msg, [
         'imported' => $imported,
         'duplicates' => $duplicates,
         'errors' => $errors,
-        'error_messages' => array_slice($errorMessages, 0, 10) // Mostrar solo los primeros 10 errores
+        'error_messages' => array_slice($errorMessages, 0, 10)
     ]);
-    
+
 } catch (Exception $e) {
     error_log("Error en import_csv.php: " . $e->getMessage());
-    jsonResponse(false, 'Error al procesar el archivo CSV');
+    jsonResponse(false, 'Error interno al procesar el CSV');
 }
-?>
